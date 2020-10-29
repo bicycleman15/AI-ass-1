@@ -101,7 +101,7 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return [s, s, w, s, w, w, s, w]
 
-# TODO : Fix this shit first, use parent array maybe.
+# TODO Still a bug here.
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -163,13 +163,102 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    q = util.Queue()
+    visited = set()
+
+    par = {}
+    directions = {}
+
+    q.push(problem.getStartState())
+    visited.add(problem.getStartState())
+    goal = None
+
+    while q.isEmpty() is False:
+        cur = q.pop()
+
+        if problem.isGoalState(cur):
+            goal = cur
+            break
+
+        for child, dir_child, cost in problem.getSuccessors(cur):
+
+            if child not in visited:
+                
+                visited.add(child)
+                q.push(child)
+
+                par[child] = cur
+                directions[child] = dir_child
+    
+    assert goal is not None
+    ans = list()
+
+    cur = goal
+    while cur in par:
+        ans.append(directions[cur])
+        cur = par[cur]
+    
+    ans.reverse()
+
+    return ans
 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    q = util.PriorityQueue()
+    dist = {}
+    visited = set()
+
+    par = {}
+    directions = {}
+
+    src = problem.getStartState()
+    q.push(src, 0)
+    dist[src] = 0
+
+    goal = None
+
+    while q.isEmpty() is False:
+        cur = q.pop()
+        visited.add(cur)
+
+        if problem.isGoalState(cur):
+            goal = cur
+            break
+
+        for child, dir_child, cost in problem.getSuccessors(cur):
+
+            if child in visited:
+                continue
+
+            if child not in dist:
+                dist[child] = dist[cur] + cost
+                par[child] = cur
+                directions[child] = dir_child
+                q.push(child, dist[child])
+                
+            if dist[child] > dist[cur] + cost:
+                dist[child] = dist[cur] + cost
+                par[child] = cur
+                directions[child] = dir_child
+                q.update(child, dist[child])
+        
+        # import pdb; pdb.set_trace()
+    
+    assert goal is not None
+    ans = list()
+
+    cur = goal
+    while cur in par:
+        ans.append(directions[cur])
+        cur = par[cur]
+    
+    ans.reverse()
+
+    return ans
 
 
 def nullHeuristic(state, problem=None):
@@ -183,7 +272,70 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    q = util.PriorityQueue()
+    dist = {}
+    func = {}
+    visited = set()
+
+    par = {}
+    directions = {}
+
+    src = problem.getStartState()
+    dist[src] = 0 # + 0
+    func[src] = heuristic(src, problem)
+    q.push(src, dist[src])
+
+    goal = None
+
+    while q.isEmpty() is False:
+        cur = q.pop()
+        visited.add(cur)
+
+        if problem.isGoalState(cur):
+            goal = cur
+            break
+
+        for child, dir_child, cost in problem.getSuccessors(cur):
+            
+            heur_cost = heuristic(child, problem)
+
+            if child in visited:
+                continue
+
+            if child not in dist or child not in func:
+                
+                # Both must not be there, just a sanitation check
+                assert child not in dist and child not in func
+
+                dist[child] = dist[cur] + cost
+                func[child] = dist[cur] + cost + heur_cost
+
+                par[child] = cur
+                directions[child] = dir_child
+                q.push(child, func[child])
+            
+            # anyway, I can only change g[n] i.e in this case it is dist[n]
+            if func[child] > dist[cur] + cost + heur_cost:
+
+                dist[child] = dist[cur] + cost
+                func[child] = dist[cur] + cost + heur_cost
+
+                par[child] = cur
+                directions[child] = dir_child
+                q.update(child, func[child])
+        
+        # import pdb; pdb.set_trace()
+    
+    assert goal is not None
+    ans = list()
+
+    cur = goal
+    while cur in par:
+        ans.append(directions[cur])
+        cur = par[cur]
+    
+    ans.reverse()
+    return ans
 
 
 # Abbreviations
