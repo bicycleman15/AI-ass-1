@@ -120,42 +120,44 @@ def depthFirstSearch(problem):
 
     visited = set()
     stack = util.Stack()
-    ans_string = util.Stack()
+    par = {} # keep to reconstruct the answer
+    directions = {}
 
     stack.push(problem.getStartState())
     visited.add(problem.getStartState())
-    found = False
+    
+    goal = None
 
     while stack.isEmpty() is False:
-
-        pos = stack.pop()
-
-        if problem.isGoalState(pos):
-            found = True
+        
+        cur = stack.pop()
+        if problem.isGoalState(cur):
+            goal = cur
             break
 
-        stack.push(pos)
-        keep = False
+        for child, dir_child, cost in problem.getSuccessors(cur):
+            if child not in visited:
+                
+                visited.add(child)
+                stack.push(child)
 
-        # import pdb; pdb.set_trace()
+                par[child] = cur
+                directions[child] = dir_child
 
-        for children in problem.getSuccessors(pos):
-            child_pos, dir_str, cost = children
-            if child_pos not in visited:
-                # print(child_pos)
-                visited.add(child_pos)
-                keep = True
-                stack.push(child_pos)
-                ans_string.push(dir_str)
-                break
+    assert goal is not None
 
-        if keep is False:  # second check to make sure stack is not empty
-            stack.pop()
-            ans_string.pop()
+    ans = []
 
-    assert found is True
+    cur = goal
+    while cur in par:
+        ans.append(directions[cur])
+        cur = par[cur]
+    
+    ans.reverse()
 
-    return ans_string.list
+    # import pdb; pdb.set_trace()
+    return ans
+
 
 
 def breadthFirstSearch(problem):
