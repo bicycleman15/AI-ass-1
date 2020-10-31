@@ -306,6 +306,13 @@ class CornersProblem(search.SearchProblem):
             (right, top) : 3
         }
 
+        self.bit_to_pos = {
+            0 : (1,1),
+            1 : (1, top),
+            2 : (right, 1),
+            3 : (right, top)
+        }
+
         self.start_state = (self.startingPosition, 0)
         if self.startingPosition == self.corners:
             self.start_state[1] += (1 << self.pos_to_bit[self.startingPosition])
@@ -397,11 +404,40 @@ def cornersHeuristic(state, problem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+    "*** YOUR CODE HERE ***"
+    # return 0 # Default to trivial solution
+
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    (x, y), mask = state
+
+    assert walls[x][y] == False
+
+    # if already visited all the corners
+    if mask == 15:
+        return 0
+
+    valid_pos = list()
+    for i in range(4):
+        if ((mask>>i)&1) == 0:
+            valid_pos.append(problem.bit_to_pos[i])
+    
+    import itertools
+    all_perm = list(itertools.permutations(valid_pos))
+
+    mn_val = 1e6
+
+    for seq in all_perm:
+        xi, yi = seq[0]
+        dist = abs(x-xi) + abs(y-yi)
+        for i in range(1,len(seq)):
+            xi, yi = seq[i-1]
+            xt, yt = seq[i]
+            dist += abs(xi-xt) + abs(yi-yt)
+        mn_val = min(mn_val, dist)
+
+    return mn_val
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
