@@ -131,6 +131,8 @@ def depthFirstSearch(problem):
     while stack.isEmpty() is False:
         
         cur = stack.pop()
+        visited.add(cur)
+        
         if problem.isGoalState(cur):
             goal = cur
             break
@@ -138,7 +140,6 @@ def depthFirstSearch(problem):
         for child, dir_child, cost in problem.getSuccessors(cur):
             if child not in visited:
                 
-                visited.add(child)
                 stack.push(child)
 
                 par[child] = cur

@@ -510,6 +510,82 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+def createGraph(coord_list, cur_pos):
+    edges = set()
+    for i in range(len(coord_list)):
+        for j in range(i+1,len(coord_list)):
+            x, y = min(coord_list[i], coord_list[j]), max(coord_list[i], coord_list[j])
+
+            dist = abs(x[0]-y[0]) + abs(x[1]-y[1])
+
+            if (x,y,dist) in edges:
+                continue
+
+            edges.add((x,y,dist))
+
+    # for c in coord_list:
+    #     x, y = min(cur_pos,c), max(cur_pos, c)
+    #     dist = abs(x[0]-y[0]) + abs(x[1]-y[1])
+    #     graph[x] = 1
+    #     graph[y] = 1
+    #     if (x,y,dist) in edges:
+    #         continue
+    #     edges.add((x,y,dist))
+
+    return edges
+
+def doMST(graph, edges, cur_pos):
+    """
+    graph : dictionary in form of coord -> [(coor2, cost2), (coor3, cost3)]
+    edges : form of [(coori, coorj)], coori < coorj
+    """
+    par = {}
+    for x in graph:
+        par[x] = x
+
+    def root(x):
+        while x != par[x]:
+            x = root(par[x])
+            return x
+        else:
+            return x
+
+    def unite(x ,y):
+        x = root(x)
+        y = root(y)
+        par[x] = y
+    
+    # push all edges in priority queue
+    Q = util.PriorityQueue()
+
+    for edge in edges:
+        x, y, cost = edge
+        Q.push((x,y,cost),cost)
+    
+    N = len(graph)
+    choosen = 0
+    cost = 0
+
+    while choosen < N-1:
+        x, y, cur_cost = Q.pop()
+
+        if root(x) == root(y):
+            continue
+
+        unite(x,y)
+
+        choosen += 1
+        cost += cur_cost
+
+    min_val = 1e6
+    for x in graph:
+        min_val = min(min_val, abs(x[0]-cur_pos[0]) + abs(x[1] - cur_pos[1]))
+
+    if min_val == 1e6:
+        min_val = 0
+
+    return cost + min_val
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -538,9 +614,14 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    # return 0
+
+    position, foodGrid = state
+    edges = createGraph(foodGrid.asList(), position)
+
+    cost = doMST(foodGrid.asList(), edges, position)
+    return cost
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
