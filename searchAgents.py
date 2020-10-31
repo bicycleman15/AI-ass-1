@@ -34,6 +34,7 @@ description for details.
 Good luck and happy searching!
 """
 
+from pickle import FALSE
 from game import Directions
 from game import Agent
 from game import Actions
@@ -298,6 +299,18 @@ class CornersProblem(search.SearchProblem):
         # in initializing the problem
         "*** YOUR CODE HERE ***"
 
+        self.pos_to_bit = {
+            (1,1) : 0,
+            (1, top) : 1,
+            (right, 1): 2,
+            (right, top) : 3
+        }
+
+        self.start_state = (self.startingPosition, 0)
+        if self.startingPosition == self.corners:
+            self.start_state[1] += (1 << self.pos_to_bit[self.startingPosition])
+        
+
     def increment_expanded(self):
         self.__expanded += 1
         
@@ -310,14 +323,18 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.start_state
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        
+        if state[1] == 15:
+            return True
+        else:
+            return False
 
     def getSuccessors(self, state):
         """
@@ -334,12 +351,21 @@ class CornersProblem(search.SearchProblem):
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
-
             "*** YOUR CODE HERE ***"
+            x,y = state[0]
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+
+            if hitsWall:
+                continue
+            
+            old_vis = state[1]
+            if (nextx, nexty) in self.corners:
+                pos = self.pos_to_bit[(nextx, nexty)]
+                old_vis |= (1 << pos)
+                
+            successors.append(( ((nextx, nexty), old_vis) , action, 1))
 
         self.increment_expanded() # DO NOT CHANGE
         return successors
